@@ -1,0 +1,127 @@
+-- ======================================
+-- MySQL Practical: University Database
+-- ======================================
+
+-- Drop existing tables if any
+DROP TABLE IF EXISTS teaches, student, instructor, course;
+
+-- ======================================
+-- Create Tables
+-- ======================================
+
+CREATE TABLE instructor (
+  T_ID INT PRIMARY KEY,
+  name VARCHAR(50),
+  dept_name VARCHAR(50),
+  salary DECIMAL(10,2)
+);
+
+CREATE TABLE course (
+  course_id VARCHAR(10) PRIMARY KEY,
+  title VARCHAR(100),
+  dept_name VARCHAR(50),
+  credits INT
+);
+
+CREATE TABLE teaches (
+  T_ID INT,
+  course_id VARCHAR(10),
+  sec_id INT,
+  semester VARCHAR(10),
+  year INT,
+  FOREIGN KEY (T_ID) REFERENCES instructor(T_ID),
+  FOREIGN KEY (course_id) REFERENCES course(course_id)
+);
+
+CREATE TABLE student (
+  S_ID INT PRIMARY KEY,
+  name VARCHAR(50),
+  dept_name VARCHAR(50),
+  tot_cred INT
+);
+
+-- ======================================
+-- Insert Sample Data
+-- ======================================
+
+INSERT INTO instructor VALUES
+(101, 'Dr. Sharma', 'CSE', 40000),
+(102, 'Dr. Mehta', 'IT', 28000),
+(103, 'Dr. Rao', 'CSE', 22000),
+(104, 'Dr. Gupta', 'ENTC', 35000);
+
+INSERT INTO course VALUES
+('CS101', 'Database Systems', 'CSE', 4),
+('IT201', 'Networking', 'IT', 3),
+('EC301', 'Digital Circuits', 'ENTC', 4),
+('CS202', 'Data Structures', 'CSE', 3);
+
+INSERT INTO teaches VALUES
+(101, 'CS101', 1, 'Fall', 2023),
+(102, 'IT201', 2, 'Spring', 2024),
+(104, 'EC301', 1, 'Fall', 2024),
+(101, 'CS202', 1, 'Spring', 2023);
+
+INSERT INTO student VALUES
+(1, 'Krishna', 'CSE', 30),
+(2, 'Riya', 'IT', 25),
+(3, 'Amit', 'ENTC', 20);
+
+-- ======================================
+-- (i) Find names of all instructors whose salary > 25000
+-- ======================================
+
+SELECT name, dept_name, salary
+FROM instructor
+WHERE salary > 25000;
+
+-- ======================================
+-- (ii) Update Instructor dept_name from 'CSE' to 'IT'
+-- ======================================
+
+UPDATE instructor
+SET dept_name = 'IT'
+WHERE dept_name = 'CSE';
+
+-- Display updated instructor table
+SELECT * FROM instructor;
+
+-- ======================================
+-- (iii) Create Simple Index on course table on attribute dept_name
+--       and find out department-wise courses
+-- ======================================
+
+CREATE INDEX idx_deptname ON course(dept_name);
+
+-- Query to find department-wise courses
+SELECT dept_name, title
+FROM course
+ORDER BY dept_name;
+
+-- Show indexes on the course table
+SHOW INDEX FROM course;
+
+-- ======================================
+-- (iv) Create a View to retrieve instructor data with course,
+--      section, semester, and year he conducted lectures on
+-- ======================================
+
+CREATE VIEW instructor_course_details AS
+SELECT 
+  i.T_ID,
+  i.name AS Instructor_Name,
+  i.dept_name AS Department,
+  c.title AS Course_Title,
+  t.sec_id AS Section,
+  t.semester,
+  t.year
+FROM instructor i
+JOIN teaches t ON i.T_ID = t.T_ID
+JOIN course c ON t.course_id = c.course_id;
+
+-- Display the view
+SELECT * FROM instructor_course_details;
+
+-- ======================================
+-- END OF PROGRAM
+-- ======================================
