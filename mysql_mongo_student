@@ -1,0 +1,92 @@
+Use Java and MongoDB connectivity and perform the following operations
+Student(Roll_no, S_name, Semester,Year, No_of_backlogs)
+i. Create a database and student collection
+ii. Insert the documents in to the student collection
+iii. Delete the students who have got backlogs>4.
+iv. Retrieve the documents based on student “Roll_no”
+
+
+import com.mongodb.client.*;
+import com.mongodb.client.model.Filters;
+import org.bson.Document;
+import java.util.Scanner;
+
+public class StudentMongo {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // 1️⃣ Connect to MongoDB server
+        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
+
+        // 2️⃣ Create Database and Collection
+        MongoDatabase db = mongoClient.getDatabase("collegeDB");
+        MongoCollection<Document> collection = db.getCollection("student");
+        System.out.println("✅ Connected to MongoDB and ready to use 'collegeDB.student'");
+
+        // ---------------------------------------------------
+        // ii. Insert documents into the student collection
+        // ---------------------------------------------------
+        System.out.print("\nEnter number of students to insert: ");
+        int n = sc.nextInt();
+
+        for (int i = 1; i <= n; i++) {
+            sc.nextLine(); // consume newline
+            System.out.println("\n--- Student " + i + " ---");
+            System.out.print("Enter Roll No: ");
+            int roll = sc.nextInt();
+            sc.nextLine();
+            System.out.print("Enter Student Name: ");
+            String name = sc.nextLine();
+            System.out.print("Enter Semester: ");
+            int sem = sc.nextInt();
+            System.out.print("Enter Year: ");
+            int year = sc.nextInt();
+            System.out.print("Enter No. of Backlogs: ");
+            int backlogs = sc.nextInt();
+
+            Document doc = new Document("Roll_no", roll)
+                    .append("S_name", name)
+                    .append("Semester", sem)
+                    .append("Year", year)
+                    .append("No_of_backlogs", backlogs);
+
+            collection.insertOne(doc);
+        }
+        System.out.println("✅ Student records inserted successfully!");
+
+        // ---------------------------------------------------
+        // iii. Delete students who have backlogs > 4
+        // ---------------------------------------------------
+        long deletedCount = collection.deleteMany(Filters.gt("No_of_backlogs", 4)).getDeletedCount();
+        System.out.println("\n🗑️ Deleted " + deletedCount + " student(s) having backlogs > 4");
+
+        // ---------------------------------------------------
+        // iv. Retrieve documents based on Roll_no
+        // ---------------------------------------------------
+        System.out.print("\nEnter Roll No to search: ");
+        int searchRoll = sc.nextInt();
+
+        Document student = collection.find(Filters.eq("Roll_no", searchRoll)).first();
+        if (student != null) {
+            System.out.println("\n--- Student Details ---");
+            System.out.println("Roll No       : " + student.getInteger("Roll_no"));
+            System.out.println("Name          : " + student.getString("S_name"));
+            System.out.println("Semester      : " + student.getInteger("Semester"));
+            System.out.println("Year          : " + student.getInteger("Year"));
+            System.out.println("No of Backlogs: " + student.getInteger("No_of_backlogs"));
+        } else {
+            System.out.println("❌ Student not found.");
+        }
+
+        // ---------------------------------------------------
+        // Display all remaining documents
+        // ---------------------------------------------------
+        System.out.println("\n📘 Final Student Collection:");
+        for (Document doc : collection.find()) {
+            System.out.println(doc.toJson());
+        }
+
+        mongoClient.close();
+        sc.close();
+    }
+}
