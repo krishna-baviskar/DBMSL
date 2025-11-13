@@ -1,0 +1,53 @@
+Use Java and MongoDB connectivity and Write a MapReduce program for
+categorising books as “Big book” and “Small book” based on number of pages.
+Books {
+Name:”Understanding mongoDB”,
+Pages: 200}
+
+import com.mongodb.client.*;
+import org.bson.Document;
+import java.util.Arrays;
+
+public class BookMapReduce {
+    public static void main(String[] args) {
+        // 1️⃣ Connect to MongoDB
+        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
+        MongoDatabase db = mongoClient.getDatabase("libraryDB");
+        MongoCollection<Document> books = db.getCollection("books");
+
+        // 2️⃣ Insert Sample Documents
+        books.drop(); // clear collection first
+        books.insertMany(Arrays.asList(
+                new Document("Name", "Understanding MongoDB").append("Pages", 200),
+                new Document("Name", "Mastering Java").append("Pages", 450),
+                new Document("Name", "Python Basics").append("Pages", 180),
+                new Document("Name", "Data Structures in Depth").append("Pages", 520)
+        ));
+        System.out.println("✅ Sample books inserted.");
+
+        // 3️⃣ Map Function
+        // Categorize each book as Big or Small
+        String mapFunction = "function() { " +
+                "if (this.Pages > 300) " +
+                "   emit('Big Book', 1); " +
+                "else " +
+                "   emit('Small Book', 1); " +
+                "}";
+
+        // 4️⃣ Reduce Function
+        // Count number of books in each category
+        String reduceFunction = "function(key, values) { " +
+                "return Array.sum(values); " +
+                "}";
+
+        // 5️⃣ Perform MapReduce
+        MongoIterable<Document> results = books.mapReduce(mapFunction, reduceFunction);
+
+        System.out.println("\n📘 Categorized Books (MapReduce Result):");
+        for (Document doc : results) {
+            System.out.println(doc.toJson());
+        }
+
+        mongoClient.close();
+    }
+}
