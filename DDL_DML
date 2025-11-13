@@ -1,0 +1,99 @@
+-- ============================================================
+-- 1️⃣ Create Tables
+-- ============================================================
+CREATE DATABASE companyDB;
+USE companyDB;
+
+CREATE TABLE Employee (
+    e_no INT PRIMARY KEY,
+    e_name VARCHAR(50),
+    post VARCHAR(30),
+    pay_rate DECIMAL(10,2)
+);
+
+CREATE TABLE Position (
+    pos_no INT PRIMARY KEY,
+    post VARCHAR(30)
+);
+
+CREATE TABLE Duty_alloc (
+    pos_no INT,
+    e_no INT,
+    month VARCHAR(15),
+    year INT,
+    shift VARCHAR(10),
+    FOREIGN KEY (pos_no) REFERENCES Position(pos_no),
+    FOREIGN KEY (e_no) REFERENCES Employee(e_no)
+);
+
+-- ============================================================
+-- 2️⃣ Insert Sample Data
+-- ============================================================
+INSERT INTO Employee VALUES
+(101, 'Krishna', 'Manager', 55000),
+(102, 'Ravi', 'Clerk', 25000),
+(103, 'Amit', 'Assistant', 30000),
+(104, 'Priya', 'Manager', 60000);
+
+INSERT INTO Position VALUES
+(1, 'Manager'),
+(2, 'Clerk'),
+(3, 'Assistant'),
+(4, 'HR');
+
+INSERT INTO Duty_alloc VALUES
+(1, 101, 'January', 2025, 'Morning'),
+(2, 102, 'January', 2025, 'Evening'),
+(3, 103, 'February', 2025, 'Night');
+
+-- ============================================================
+-- 3️⃣ Create View that displays first three columns of Employee table
+-- ============================================================
+CREATE VIEW view_emp_basic AS
+SELECT e_no, e_name, post
+FROM Employee;
+
+-- ✅ Test the View
+SELECT * FROM view_emp_basic;
+
+-- ============================================================
+-- 4️⃣ Create View for LEFT OUTER JOIN on Employee and Position based on 'post'
+-- ============================================================
+CREATE VIEW view_emp_position AS
+SELECT e.e_no, e.e_name, e.post, p.pos_no
+FROM Employee e
+LEFT OUTER JOIN Position p
+ON e.post = p.post;
+
+-- ✅ Test the View
+SELECT * FROM view_emp_position;
+
+-- ============================================================
+-- 5️⃣ Create an Index on pos_no attribute of Position table
+-- ============================================================
+CREATE INDEX idx_posno ON Position(pos_no);
+
+-- ✅ Check created indexes
+SHOW INDEX FROM Position;
+
+-- ============================================================
+-- 6️⃣ Fire queries based on the indexed column
+-- ============================================================
+
+-- Query 1: Select record using indexed column
+SELECT * FROM Position WHERE pos_no = 2;
+
+-- Query 2: Select all employees with matching position number
+SELECT e.e_name, e.post, p.pos_no
+FROM Employee e, Position p
+WHERE e.post = p.post AND p.pos_no = 1;
+
+-- Query 3: Display position details ordered by indexed column
+SELECT * FROM Position ORDER BY pos_no;
+
+-- ============================================================
+-- 7️⃣ Drop the View and Index (Optional Cleanup)
+-- ============================================================
+-- DROP VIEW view_emp_basic;
+-- DROP VIEW view_emp_position;
+-- DROP INDEX idx_posno ON Position;
