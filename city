@@ -1,0 +1,76 @@
+// ================================
+// Create & Insert Sample Documents
+// ================================
+db.city.drop(); // Clear previous data
+
+db.city.insertMany([
+  { city: "pune", type: "urban", state: "MH", population: 5600000 },
+  { city: "mumbai", type: "urban", state: "MH", population: 12400000 },
+  { city: "nagpur", type: "urban", state: "MH", population: 2400000 },
+  { city: "nashik", type: "urban", state: "MH", population: 1500000 },
+  { city: "nashik_rural", type: "rural", state: "MH", population: 800000 },
+  { city: "ahmedabad", type: "urban", state: "GJ", population: 5570000 },
+  { city: "surat", type: "urban", state: "GJ", population: 4460000 },
+  { city: "rajkot", type: "urban", state: "GJ", population: 1280000 },
+  { city: "vadodara_rural", type: "rural", state: "GJ", population: 600000 }
+]);
+
+// ====================================
+// 1️⃣ MapReduce: Statewise Population
+// ====================================
+var mapState = function() {
+  emit(this.state, this.population);
+};
+
+var reduceState = function(key, values) {
+  return Array.sum(values);
+};
+
+db.city.mapReduce(
+  mapState,
+  reduceState,
+  { out: "statewise_population" }
+);
+
+print("\n--- Statewise Population ---");
+db.statewise_population.find().pretty();
+
+// ====================================
+// 2️⃣ MapReduce: Citywise Population
+// ====================================
+var mapCity = function() {
+  emit(this.city, this.population);
+};
+
+var reduceCity = function(key, values) {
+  return Array.sum(values);
+};
+
+db.city.mapReduce(
+  mapCity,
+  reduceCity,
+  { out: "citywise_population" }
+);
+
+print("\n--- Citywise Population ---");
+db.citywise_population.find().pretty();
+
+// ====================================
+// 3️⃣ MapReduce: Typewise Population
+// ====================================
+var mapType = function() {
+  emit(this.type, this.population);
+};
+
+var reduceType = function(key, values) {
+  return Array.sum(values);
+};
+
+db.city.mapReduce(
+  mapType,
+  reduceType,
+  { out: "typewise_population" }
+);
+
+print("\n--- Typewise Population ---");
+db.typewise_population.find().pretty();
