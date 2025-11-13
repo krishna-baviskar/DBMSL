@@ -1,0 +1,82 @@
+Write a PL/SQL block to implement database trigger on Library Table
+
+-- Drop tables if they already exist (optional cleanup)
+DROP TABLE Library_Audit PURGE;
+DROP TABLE Library PURGE;
+
+-- 1️⃣ Create Main Table: Library
+CREATE TABLE Library (
+    book_id NUMBER PRIMARY KEY,
+    book_name VARCHAR2(100),
+    author VARCHAR2(50),
+    price NUMBER
+);
+
+-- 2️⃣ Create Audit Table to Track Changes
+CREATE TABLE Library_Audit (
+    audit_id NUMBER GENERATED ALWAYS AS IDENTITY,
+    book_id NUMBER,
+    action_type VARCHAR2(20),
+    old_price NUMBER,
+    new_price NUMBER,
+    modified_by VARCHAR2(50),
+    modified_on DATE
+);
+
+-- 3️⃣ Create Trigger on Library Table
+CREATE OR REPLACE TRIGGER trg_Library_Audit
+AFTER INSERT OR UPDATE OR DELETE ON Library
+FOR EACH ROW
+DECLARE
+    v_user VARCHAR2(50);
+BEGIN
+    -- Get current database user
+    SELECT USER INTO v_user FROM dual;
+
+    -- Case 1: INSERT
+    IF INSERTING THEN
+        INSERT INTO Library_Audit(book_id, action_type, new_price, modified_by, modified_on)
+        VALUES (:NEW.book_id, 'INSERT', :NEW.price, v_user, SYSDATE);
+
+    -- Case 2: UPDATE
+    ELSIF UPDATING THEN
+        INSERT INTO Library_Audit(book_id, action_type, old_price, new_price, modified_by, modified_on)
+        VALUES (:OLD.book_id, 'UPDATE', :OLD.price, :NEW.price, v_user, SYSDATE);
+
+    -- Case 3: DELETE
+    ELSIF DELETING THEN
+        INSERT INTO Library_Audit(book_id, action_type, old_price, modified_by, modified_on)
+        VALUES (:OLD.book_id, 'DELETE', :OLD.price, v_user, SYSDATE);
+    END IF;
+END;
+/
+-- ✅ Trigger created successfully
+
+-- 4️⃣ Test the Trigger
+
+-- Insert some books
+INSERT INTO Library VALUES (1, 'DBMS Concepts', 'Korth', 450);
+INSERT INTO Library VALUES (2, 'Java Programming', 'Herbert', 550);
+
+-- Update book price
+UPDATE Library SET price = 600 WHERE book_id = 2;
+
+-- Delete a book
+DELETE FROM Library WHERE book_id = 1;
+COMMIT;
+
+-- 5️⃣ Display Audit Log
+SET SERVEROUTPUT ON;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('--- Library Audit Log ---');
+    FOR rec IN (SELECT * FROM Library_Audit ORDER BY audit_id) LOOP
+        DBMS_OUTPUT.PUT_LINE(rec.audit_id || ' | ' ||
+                             rec.book_id || ' | ' ||
+                             rec.action_type || ' | ' ||
+                             NVL(TO_CHAR(rec.old_price), '-') || ' | ' ||
+                             NVL(TO_CHAR(rec.new_price), '-') || ' | ' ||
+                             rec.modified_by || ' | ' ||
+                             TO_CHAR(rec.modified_on, 'DD-MON-YYYY HH:MI:SS'));
+    END LOOP;
+END;
+/
