@@ -1,0 +1,94 @@
+// ==========================================================
+// 1️⃣ Create Database and Collection
+// ==========================================================
+use shopDB;
+
+db.orderinfo.drop();   // clear previous data if any
+
+db.orderinfo.insertMany([
+  { cust_id: 101, cust_name: "Krishna", status: "A", price: 250 },
+  { cust_id: 102, cust_name: "Ravi", status: "A", price: 500 },
+  { cust_id: 103, cust_name: "Amit", status: "B", price: 400 },
+  { cust_id: 101, cust_name: "Krishna", status: "A", price: 150 },
+  { cust_id: 104, cust_name: "Priya", status: "B", price: 800 },
+  { cust_id: 105, cust_name: "Ravi", status: "A", price: 350 }
+]);
+
+print("✅ Sample data inserted!");
+db.orderinfo.find().pretty();
+
+
+// ==========================================================
+// 2️⃣ Find the total price for each customer and display in the order of total price
+// ==========================================================
+print("\n🔹 Total Price per Customer (Descending Order):");
+db.orderinfo.aggregate([
+  {
+    $group: {
+      _id: "$cust_name",
+      total_price: { $sum: "$price" }
+    }
+  },
+  { $sort: { total_price: -1 } } // descending order
+]);
+
+
+// ==========================================================
+// 3️⃣ Display the average price for each customer group by status
+// ==========================================================
+print("\n🔹 Average Price per Customer Grouped by Status:");
+db.orderinfo.aggregate([
+  {
+    $group: {
+      _id: "$status",
+      avg_price: { $avg: "$price" }
+    }
+  }
+]);
+
+
+// ==========================================================
+// 4️⃣ Create a Simple Index on 'cust_id'
+// ==========================================================
+print("\n🔹 Creating Simple Index on cust_id...");
+db.orderinfo.createIndex({ cust_id: 1 });
+
+print("\n✅ Index Created Successfully!");
+db.orderinfo.getIndexes();
+
+
+// ==========================================================
+// 5️⃣ Create a Complex (Compound) Index
+// ==========================================================
+print("\n🔹 Creating Complex Index on (cust_id, status)...");
+db.orderinfo.createIndex({ cust_id: 1, status: 1 });
+
+print("\n✅ Complex Index Created Successfully!");
+db.orderinfo.getIndexes();
+
+
+// ==========================================================
+// 6️⃣ Fire Query Using Complex Index
+// ==========================================================
+print("\n🔹 Query Using Complex Index (cust_id=101, status='A'):");
+db.orderinfo.find({ cust_id: 101, status: "A" }).pretty();
+
+
+// ==========================================================
+// 7️⃣ Drop Duplicates (remove documents having same cust_id & status)
+// ==========================================================
+// Keep only one document per (cust_id, status) pair
+print("\n🔹 Removing Duplicate Entries (keeping one per cust_id+status)...");
+var uniqueDocs = {};
+db.orderinfo.find().forEach(function(doc) {
+  var key = doc.cust_id + "_" + doc.status;
+  if (uniqueDocs[key]) {
+    db.orderinfo.deleteOne({ _id: doc._id });
+  } else {
+    uniqueDocs[key] = true;
+  }
+});
+print("✅ Duplicates removed successfully!");
+
+// Check final documents
+db.orderinfo.find().pretty();
