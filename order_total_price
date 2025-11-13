@@ -1,0 +1,51 @@
+// ============================================
+// Create & Insert Sample Documents in "orderinfo"
+// ============================================
+db.orderinfo.drop(); // Clear old data
+
+db.orderinfo.insertMany([
+  { cust_id: 101, cust_name: "abc", status: "A", price: 250 },
+  { cust_id: 102, cust_name: "xyz", status: "B", price: 300 },
+  { cust_id: 103, cust_name: "pqr", status: "A", price: 450 },
+  { cust_id: 101, cust_name: "abc", status: "A", price: 150 },
+  { cust_id: 104, cust_name: "lmn", status: "C", price: 500 },
+  { cust_id: 102, cust_name: "xyz", status: "B", price: 200 }
+]);
+
+// ============================================
+// i. Find the total price for each customer and display in the order of total price
+// ============================================
+// Using Aggregation Pipeline
+print("\n--- Total Price for Each Customer (Sorted by Total Price) ---");
+db.orderinfo.aggregate([
+  {
+    $group: {
+      _id: "$cust_name",
+      total_price: { $sum: "$price" }
+    }
+  },
+  { $sort: { total_price: 1 } } // Ascending order (use -1 for descending)
+]).pretty();
+
+// ============================================
+// ii. Find the distinct customer names
+// ============================================
+print("\n--- Distinct Customer Names ---");
+printjson(db.orderinfo.distinct("cust_name"));
+
+// ============================================
+// iii. Display the “price” of customers whose status is 'A'
+// ============================================
+print("\n--- Price of Customers with Status 'A' ---");
+db.orderinfo.find(
+  { status: "A" },
+  { cust_name: 1, price: 1, _id: 0 }
+).pretty();
+
+// ============================================
+// iv. Delete the customers whose status is 'A'
+// ============================================
+db.orderinfo.deleteMany({ status: "A" });
+
+print("\n--- Remaining Documents After Deletion ---");
+db.orderinfo.find().pretty();
