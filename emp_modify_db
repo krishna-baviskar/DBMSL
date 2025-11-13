@@ -1,0 +1,106 @@
+-- =====================================================
+-- MySQL Practical: EMP, WORKS, COMPANY, MANAGER
+-- =====================================================
+
+-- Drop old tables if they exist
+DROP TABLE IF EXISTS Emp, Works, Company, Manager;
+
+-- =====================================================
+-- Create Tables
+-- =====================================================
+CREATE TABLE Emp (
+  emp_id INT PRIMARY KEY,
+  ename VARCHAR(50),
+  street VARCHAR(50),
+  city VARCHAR(50)
+);
+
+CREATE TABLE Company (
+  c_id INT PRIMARY KEY,
+  cname VARCHAR(50),
+  city VARCHAR(50)
+);
+
+CREATE TABLE Works (
+  emp_id INT,
+  c_id INT,
+  ename VARCHAR(50),
+  cname VARCHAR(50),
+  sal DECIMAL(10,2)
+);
+
+CREATE TABLE Manager (
+  mgr_id INT PRIMARY KEY,
+  mgrname VARCHAR(50)
+);
+
+-- =====================================================
+-- Insert Sample Data
+-- =====================================================
+INSERT INTO Emp VALUES
+(1, 'Ramesh', 'MG Road', 'Mumbai'),
+(2, 'Suresh', 'Baner', 'Pune'),
+(3, 'Amit', 'Camp', 'Pune'),
+(4, 'Vikram', 'Deccan', 'Pune'),
+(5, 'Meena', 'Bandra', 'Mumbai');
+
+INSERT INTO Company VALUES
+(101, 'ABC', 'Mumbai'),
+(102, 'Bosch', 'Pune'),
+(103, 'Mbank', 'Delhi'),
+(104, 'SBC', 'Pune');
+
+INSERT INTO Works VALUES
+(1, 101, 'Ramesh', 'ABC', 30000),
+(2, 102, 'Suresh', 'Bosch', 40000),
+(3, 103, 'Amit', 'Mbank', 25000),
+(4, 103, 'Vikram', 'Mbank', 18000),
+(5, 104, 'Meena', 'SBC', 52000);
+
+INSERT INTO Manager VALUES
+(201, 'Ketan'),
+(202, 'Anjali'),
+(203, 'Rohit');
+
+-- =====================================================
+-- i. Modify the database so that a particular company (e.g., ABC) is now in Pune
+-- =====================================================
+UPDATE Company
+SET city = 'Pune'
+WHERE cname = 'ABC';
+
+-- Verify change
+SELECT * FROM Company;
+
+-- =====================================================
+-- ii. Give all managers of 'Mbank' a raise:
+--     10% raise if salary <= 20000, else 3% raise
+-- =====================================================
+UPDATE Works
+SET sal = CASE
+             WHEN sal <= 20000 THEN sal * 1.10
+             ELSE sal * 1.03
+          END
+WHERE cname = 'Mbank';
+
+-- Verify salary changes
+SELECT * FROM Works WHERE cname = 'Mbank';
+
+-- =====================================================
+-- iii. Find names of all employees who work in 'Bosch' company in city Pune
+-- =====================================================
+SELECT e.ename
+FROM Emp e
+JOIN Works w ON e.emp_id = w.emp_id
+JOIN Company c ON w.c_id = c.c_id
+WHERE c.cname = 'Bosch' AND c.city = 'Pune';
+
+-- =====================================================
+-- iv. Delete all records in Works table for employees
+--     of company 'SBC' whose salary > 50000
+-- =====================================================
+DELETE FROM Works
+WHERE cname = 'SBC' AND sal > 50000;
+
+-- Verify deletion
+SELECT * FROM Works;
