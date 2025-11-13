@@ -1,0 +1,112 @@
+-- ===============================================
+-- MySQL Practical: Instructor, Course, Section, Teaches
+-- ===============================================
+
+-- Drop existing tables if any
+DROP TABLE IF EXISTS teaches, section, instructor, course;
+
+-- ===============================================
+-- Create Tables
+-- ===============================================
+CREATE TABLE instructor (
+  T_ID INT PRIMARY KEY,
+  name VARCHAR(50),
+  dept_name VARCHAR(50),
+  salary DECIMAL(10,2)
+);
+
+CREATE TABLE course (
+  course_id INT PRIMARY KEY,
+  title VARCHAR(100),
+  dept_name VARCHAR(50),
+  credits INT
+);
+
+CREATE TABLE section (
+  course_id INT,
+  sec_id INT,
+  semester VARCHAR(10),
+  year INT,
+  building VARCHAR(50),
+  room_no VARCHAR(10),
+  FOREIGN KEY (course_id) REFERENCES course(course_id)
+);
+
+CREATE TABLE teaches (
+  T_ID INT,
+  course_id INT,
+  sec_id INT,
+  semester VARCHAR(10),
+  year INT,
+  FOREIGN KEY (T_ID) REFERENCES instructor(T_ID),
+  FOREIGN KEY (course_id) REFERENCES course(course_id)
+);
+
+-- ===============================================
+-- Insert Sample Data
+-- ===============================================
+INSERT INTO instructor VALUES
+(101, 'Dr. Sharma', 'CSE', 45000),
+(102, 'Dr. Mehta', 'IT', 70000),
+(103, 'Dr. Gupta', 'ENTC', 55000),
+(104, 'Dr. Rao', 'MECH', 30000),
+(105, 'Dr. Verma', 'CSE', 80000);
+
+INSERT INTO course VALUES
+(101, 'Database Systems', 'CSE', 4),
+(102, 'Networking', 'IT', 3),
+(103, 'Digital Circuits', 'ENTC', 4),
+(104, 'Thermodynamics', 'MECH', 4);
+
+INSERT INTO section VALUES
+(101, 1, 'Fall', 2023, 'Main Building', 'B101'),
+(102, 1, 'Spring', 2024, 'Block A', 'A202'),
+(103, 1, 'Fall', 2024, 'Block B', 'B303'),
+(104, 1, 'Winter', 2024, 'Block C', 'C404');
+
+INSERT INTO teaches VALUES
+(101, 101, 1, 'Fall', 2023),
+(102, 102, 1, 'Spring', 2024),
+(103, 103, 1, 'Fall', 2024),
+(104, 104, 1, 'Winter', 2024);
+
+-- ===============================================
+-- (i) Display instructor name whose salary is between 30000 and 60000 (Descending)
+-- ===============================================
+SELECT name, dept_name, salary
+FROM instructor
+WHERE salary BETWEEN 30000 AND 60000
+ORDER BY salary DESC;
+
+-- ===============================================
+-- (ii) Find average, minimum, maximum salary in each department
+-- ===============================================
+SELECT 
+  dept_name,
+  AVG(salary) AS Avg_Salary,
+  MIN(salary) AS Min_Salary,
+  MAX(salary) AS Max_Salary
+FROM instructor
+GROUP BY dept_name;
+
+-- ===============================================
+-- (iii) Display instructor name, department and salary who teaches course_id = 101
+-- ===============================================
+SELECT 
+  i.name AS Instructor_Name,
+  i.dept_name AS Department,
+  i.salary
+FROM instructor i
+JOIN teaches t ON i.T_ID = t.T_ID
+WHERE t.course_id = 101;
+
+-- ===============================================
+-- (iv) Find the name of the instructor whose average salary is greater than 60000
+-- ===============================================
+-- (Since each instructor has one record, this checks departments whose avg > 60000)
+SELECT 
+  dept_name,
+  AVG(salary) AS Avg_Salary
+FROM instructor
+GROUP BY dept_name
+HAVING AVG(salary) > 60000;
