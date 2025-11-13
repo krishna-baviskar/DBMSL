@@ -1,0 +1,96 @@
+-- ================================
+-- MySQL Practical: University Database
+-- ================================
+
+-- Drop old tables if exist
+DROP TABLE IF EXISTS teaches, student, instructor, course;
+
+-- Create tables
+CREATE TABLE instructor (
+  T_ID INT PRIMARY KEY,
+  name VARCHAR(50),
+  dept_name VARCHAR(50),
+  salary DECIMAL(10,2)
+);
+
+CREATE TABLE course (
+  course_id VARCHAR(10) PRIMARY KEY,
+  title VARCHAR(100),
+  dept_name VARCHAR(50),
+  credits INT
+);
+
+CREATE TABLE teaches (
+  T_ID INT,
+  course_id VARCHAR(10),
+  sec_id INT,
+  semester VARCHAR(10),
+  year INT,
+  FOREIGN KEY (T_ID) REFERENCES instructor(T_ID),
+  FOREIGN KEY (course_id) REFERENCES course(course_id)
+);
+
+CREATE TABLE student (
+  S_ID INT PRIMARY KEY,
+  name VARCHAR(50),
+  dept_name VARCHAR(50),
+  tot_cred INT
+);
+
+-- Insert sample data
+INSERT INTO instructor VALUES
+(101, 'Dr. Smith', 'CSE', 90000),
+(102, 'Dr. Mehta', 'IT', 85000),
+(103, 'Dr. Gupta', 'ENTC', 80000);
+
+INSERT INTO course VALUES
+('CS101', 'Database Systems', 'CSE', 4),
+('IT201', 'Networking', 'IT', 3),
+('EC301', 'Digital Circuits', 'ENTC', 4);
+
+INSERT INTO teaches VALUES
+(101, 'CS101', 1, 'Fall', 2023),
+(102, 'IT201', 1, 'Spring', 2024),
+(103, 'EC301', 2, 'Fall', 2024);
+
+INSERT INTO student VALUES
+(1, 'Krishna', 'CSE', 30),
+(2, 'Riya', 'IT', 25),
+(3, 'Amit', NULL, 20);
+
+-- ===============================================
+-- (i) Find names of instructors who have taught courses semester-wise
+-- ===============================================
+SELECT 
+  i.name AS Instructor_Name,
+  c.title AS Course_Title,
+  t.semester,
+  t.year
+FROM instructor i
+JOIN teaches t ON i.T_ID = t.T_ID
+JOIN course c ON t.course_id = c.course_id
+ORDER BY t.semester, t.year;
+
+-- ===============================================
+-- (ii) Create a View on single table which retrieves student details
+-- ===============================================
+CREATE VIEW student_details AS
+SELECT S_ID, name, dept_name, tot_cred
+FROM student;
+
+SELECT * FROM student_details;
+
+-- ===============================================
+-- (iii) Rename column dept_name → department_name in student table
+-- ===============================================
+ALTER TABLE student
+CHANGE dept_name department_name VARCHAR(50);
+
+-- ===============================================
+-- (iv) Delete student names whose department is NULL
+-- ===============================================
+DELETE FROM student
+WHERE department_name IS NULL;
+
+-- Show final student data
+SELECT * FROM student;
