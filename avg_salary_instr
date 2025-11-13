@@ -1,0 +1,98 @@
+-- =====================================================
+-- MySQL Practical: student, instructor, course
+-- =====================================================
+
+-- Drop old tables if they exist
+DROP TABLE IF EXISTS student, instructor, course;
+
+-- =====================================================
+-- Create Tables
+-- =====================================================
+CREATE TABLE student (
+  S_ID INT PRIMARY KEY,
+  name VARCHAR(50),
+  dept_name VARCHAR(50),
+  tot_cred INT
+);
+
+CREATE TABLE instructor (
+  T_ID INT PRIMARY KEY,
+  name VARCHAR(50),
+  dept_name VARCHAR(50),
+  salary DECIMAL(10,2)
+);
+
+CREATE TABLE course (
+  course_id INT PRIMARY KEY,
+  title VARCHAR(100),
+  dept_name VARCHAR(50),
+  credits INT
+);
+
+-- =====================================================
+-- Insert Sample Data
+-- =====================================================
+INSERT INTO student VALUES
+(1, 'Aman', 'Computer', 80),
+(2, 'Anamika', 'IT', 75),
+(3, 'Samir', 'Computer', 85),
+(4, 'Kamal', 'Mechanical', 70),
+(5, 'Ram', 'ENTC', 65),
+(6, 'Arman', 'Computer', 90);
+
+INSERT INTO instructor VALUES
+(101, 'Amol', 'Computer', 40000),
+(102, 'Amit', 'IT', 45000),
+(103, 'Sneha', 'ENTC', 60000),
+(104, 'Meena', 'Mechanical', 35000),
+(105, 'Krishna', 'Computer', 50000);
+
+INSERT INTO course VALUES
+(201, 'DBMS', 'Computer', 4),
+(202, 'Networking', 'IT', 3),
+(203, 'Thermodynamics', 'Mechanical', 4),
+(204, 'VLSI', 'ENTC', 4);
+
+-- =====================================================
+-- (i) Find average salary of instructor in departments where avg salary > 42000
+-- =====================================================
+SELECT 
+  dept_name,
+  AVG(salary) AS avg_salary
+FROM instructor
+GROUP BY dept_name
+HAVING AVG(salary) > 42000;
+
+-- =====================================================
+-- (ii) Increase salary of each instructor in Computer dept by 10%
+-- =====================================================
+UPDATE instructor
+SET salary = salary * 1.10
+WHERE dept_name = 'Computer';
+
+-- View updated salaries
+SELECT * FROM instructor;
+
+-- =====================================================
+-- (iii) Find names of instructors whose names are neither 'Amol' nor 'Amit'
+-- =====================================================
+SELECT name
+FROM instructor
+WHERE name NOT IN ('Amol', 'Amit');
+
+-- =====================================================
+-- (iv) Find names of students containing 'am' as substring
+-- =====================================================
+SELECT name
+FROM student
+WHERE name LIKE '%am%';
+
+-- =====================================================
+-- (v) Find names of students from Computer dept who take 'DBMS' course
+-- (Assuming department determines course enrollment)
+-- =====================================================
+SELECT s.name
+FROM student s
+JOIN course c ON s.dept_name = c.dept_name
+WHERE s.dept_name = 'Computer'
+  AND c.title = 'DBMS';
