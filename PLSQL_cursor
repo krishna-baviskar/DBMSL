@@ -1,0 +1,121 @@
+-- ✅ FULL PL/SQL PROGRAM — Demonstrating All Cursor Types + Merge Task
+
+-- Drop if already exist (optional)
+DROP TABLE O_RollCall PURGE;
+DROP TABLE N_RollCall PURGE;
+
+-- Create Old RollCall table
+CREATE TABLE O_RollCall (
+    Roll_no NUMBER PRIMARY KEY,
+    Name VARCHAR2(50),
+    Attendance VARCHAR2(10)
+);
+
+-- Create New RollCall table
+CREATE TABLE N_RollCall (
+    Roll_no NUMBER,
+    Name VARCHAR2(50),
+    Attendance VARCHAR2(10)
+);
+
+-- Insert sample data
+INSERT INTO O_RollCall VALUES (1, 'Krishna', 'Present');
+INSERT INTO O_RollCall VALUES (2, 'Ravi', 'Absent');
+INSERT INTO O_RollCall VALUES (3, 'Amit', 'Present');
+
+INSERT INTO N_RollCall VALUES (2, 'Ravi', 'Present');  -- duplicate roll
+INSERT INTO N_RollCall VALUES (4, 'Neha', 'Present');
+INSERT INTO N_RollCall VALUES (5, 'Raj', 'Absent');
+COMMIT;
+
+SET SERVEROUTPUT ON;
+
+--------------------------------------------------------------------------------
+-- 1️⃣ Implicit Cursor Example (Auto-handled by Oracle for single row)
+--------------------------------------------------------------------------------
+BEGIN
+    UPDATE O_RollCall SET Attendance = 'Present' WHERE Roll_no = 2;
+    IF SQL%FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Implicit Cursor: Record updated successfully.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Implicit Cursor: No record updated.');
+    END IF;
+END;
+/
+--------------------------------------------------------------------------------
+-- 2️⃣ Explicit Cursor Example
+--------------------------------------------------------------------------------
+DECLARE
+    CURSOR c_explicit IS
+        SELECT Roll_no, Name, Attendance FROM O_RollCall;
+    v_roll O_RollCall.Roll_no%TYPE;
+    v_name O_RollCall.Name%TYPE;
+    v_att  O_RollCall.Attendance%TYPE;
+BEGIN
+    OPEN c_explicit;
+    LOOP
+        FETCH c_explicit INTO v_roll, v_name, v_att;
+        EXIT WHEN c_explicit%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE('Explicit Cursor → ' || v_roll || ' - ' || v_name || ' - ' || v_att);
+    END LOOP;
+    CLOSE c_explicit;
+END;
+/
+--------------------------------------------------------------------------------
+-- 3️⃣ Cursor FOR LOOP Example
+--------------------------------------------------------------------------------
+BEGIN
+    FOR rec IN (SELECT * FROM O_RollCall) LOOP
+        DBMS_OUTPUT.PUT_LINE('Cursor FOR Loop → Roll_no: ' || rec.Roll_no || ', Name: ' || rec.Name);
+    END LOOP;
+END;
+/
+--------------------------------------------------------------------------------
+-- 4️⃣ Parameterized Cursor Example + Merge N_RollCall → O_RollCall
+--------------------------------------------------------------------------------
+DECLARE
+    CURSOR c_merge(p_roll NUMBER) IS
+        SELECT Roll_no, Name, Attendance
+        FROM N_RollCall
+        WHERE Roll_no = p_roll;
+
+    v_roll N_RollCall.Roll_no%TYPE;
+    v_name N_RollCall.Name%TYPE;
+    v_att  N_RollCall.Attendance%TYPE;
+    v_count NUMBER;
+BEGIN
+    -- Loop through each record in new table
+    FOR rec IN (SELECT * FROM N_RollCall) LOOP
+
+        -- Check if roll already exists in old table
+        SELECT COUNT(*) INTO v_count
+        FROM O_RollCall
+        WHERE Roll_no = rec.Roll_no;
+
+        IF v_count = 0 THEN
+            -- Open parameterized cursor only for that roll
+            OPEN c_merge(rec.Roll_no);
+            FETCH c_merge INTO v_roll, v_name, v_att;
+
+            INSERT INTO O_RollCall VALUES (v_roll, v_name, v_att);
+            DBMS_OUTPUT.PUT_LINE('Inserted new record → Roll_no: ' || v_roll);
+
+            CLOSE c_merge;
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Skipped duplicate → Roll_no: ' || rec.Roll_no);
+        END IF;
+    END LOOP;
+
+    COMMIT;
+END;
+/
+--------------------------------------------------------------------------------
+-- ✅ Final Check — Display Merged Data
+--------------------------------------------------------------------------------
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('--- Final Data in O_RollCall ---');
+    FOR rec IN (SELECT * FROM O_RollCall ORDER BY Roll_no) LOOP
+        DBMS_OUTPUT.PUT_LINE(rec.Roll_no || ' | ' || rec.Name || ' | ' || rec.Attendance);
+    END LOOP;
+END;
+/
