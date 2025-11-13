@@ -1,0 +1,131 @@
+CREATE DATABASE companydb;
+USE companydb;
+
+CREATE TABLE Employee (
+  SSN INT PRIMARY KEY,
+  Ename VARCHAR(50),
+  state VARCHAR(30),
+  salary DECIMAL(10,2)
+);
+
+-----Java Code (JDBC Two-Tier Connectivity)
+import java.sql.*;
+import java.util.Scanner;
+
+public class EmployeeJDBC {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Connection con = null;
+        Statement st = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            // 1️⃣ Load MySQL Driver
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // 2️⃣ Establish Connection
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/companydb", "root", "your_password");
+            st = con.createStatement();
+
+            // ---------------------------------------------------
+            // i. Create Table Employee
+            // ---------------------------------------------------
+            String createTable = "CREATE TABLE IF NOT EXISTS Employee (" +
+                    "SSN INT PRIMARY KEY, " +
+                    "Ename VARCHAR(50), " +
+                    "state VARCHAR(30), " +
+                    "salary DECIMAL(10,2))";
+            st.executeUpdate(createTable);
+            System.out.println("✅ Employee table created successfully.");
+
+            // ---------------------------------------------------
+            // ii. Insert Records into Employee table
+            // ---------------------------------------------------
+            String insert = "INSERT INTO Employee (SSN, Ename, state, salary) VALUES (?, ?, ?, ?)";
+            ps = con.prepareStatement(insert);
+
+            System.out.print("\nEnter number of employees to insert: ");
+            int n = sc.nextInt();
+
+            for (int i = 1; i <= n; i++) {
+                System.out.println("\n--- Employee " + i + " ---");
+                System.out.print("Enter SSN: ");
+                int ssn = sc.nextInt();
+                sc.nextLine(); // consume newline
+                System.out.print("Enter Name: ");
+                String name = sc.nextLine();
+                System.out.print("Enter State: ");
+                String state = sc.nextLine();
+                System.out.print("Enter Salary: ");
+                double sal = sc.nextDouble();
+
+                ps.setInt(1, ssn);
+                ps.setString(2, name);
+                ps.setString(3, state);
+                ps.setDouble(4, sal);
+                ps.executeUpdate();
+            }
+            System.out.println("✅ Records inserted successfully.");
+
+            // ---------------------------------------------------
+            // iii. Retrieve details based on SSN
+            // ---------------------------------------------------
+            System.out.print("\nEnter SSN to retrieve employee details: ");
+            int searchSSN = sc.nextInt();
+
+            String select = "SELECT * FROM Employee WHERE SSN = ?";
+            ps = con.prepareStatement(select);
+            ps.setInt(1, searchSSN);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                System.out.println("\n--- Employee Details ---");
+                System.out.println("SSN   : " + rs.getInt("SSN"));
+                System.out.println("Name  : " + rs.getString("Ename"));
+                System.out.println("State : " + rs.getString("state"));
+                System.out.println("Salary: " + rs.getDouble("salary"));
+            } else {
+                System.out.println("❌ Employee not found.");
+            }
+
+            // ---------------------------------------------------
+            // iv. Update employee state from 'MH' to 'TN'
+            // ---------------------------------------------------
+            String update = "UPDATE Employee SET state='TN' WHERE state='MH'";
+            int updated = st.executeUpdate(update);
+            System.out.println("\n✅ " + updated + " record(s) updated from MH → TN.");
+
+            // ---------------------------------------------------
+            // v. Delete all employees from 'Gujrat'
+            // ---------------------------------------------------
+            String delete = "DELETE FROM Employee WHERE state='Gujrat'";
+            int deleted = st.executeUpdate(delete);
+            System.out.println("✅ " + deleted + " record(s) deleted from state 'Gujrat'.");
+
+            // ---------------------------------------------------
+            // Display Final Table
+            // ---------------------------------------------------
+            System.out.println("\n--- Final Employee Table ---");
+            rs = st.executeQuery("SELECT * FROM Employee");
+            while (rs.next()) {
+                System.out.println(rs.getInt(1) + " | " +
+                                   rs.getString(2) + " | " +
+                                   rs.getString(3) + " | " +
+                                   rs.getDouble(4));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (st != null) st.close();
+                if (con != null) con.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
