@@ -1,0 +1,51 @@
+// ============================================
+// Create & Insert Sample Documents in "books"
+// ============================================
+db.books.drop(); // Clear old data
+
+db.books.insertMany([
+  { name: "Understanding JAVA", pages: 400 },
+  { name: "Python Basics", pages: 220 },
+  { name: "C Programming", pages: 350 },
+  { name: "Web Development", pages: 180 },
+  { name: "Data Science with R", pages: 500 },
+  { name: "Machine Learning", pages: 650 },
+  { name: "HTML & CSS", pages: 150 }
+]);
+
+// ============================================
+// Map Function
+// ============================================
+// Categorize each book and emit both count and pages
+var mapBooks = function() {
+  var category = (this.pages <= 300) ? "Small Book" : "Big Book";
+  emit(category, { count: 1, totalPages: this.pages });
+};
+
+// ============================================
+// Reduce Function
+// ============================================
+// Combine count and total pages for each category
+var reduceBooks = function(key, values) {
+  var reduced = { count: 0, totalPages: 0 };
+  values.forEach(function(v) {
+    reduced.count += v.count;
+    reduced.totalPages += v.totalPages;
+  });
+  return reduced;
+};
+
+// ============================================
+// Execute MapReduce
+// ============================================
+db.books.mapReduce(
+  mapBooks,
+  reduceBooks,
+  { out: "book_categories" }
+);
+
+// ============================================
+// Display Result
+// ============================================
+print("\n--- Books Categorized by Size ---");
+db.book_categories.find().pretty();
