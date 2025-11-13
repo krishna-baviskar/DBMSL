@@ -1,0 +1,64 @@
+// ============================================
+// Create & Insert Sample Documents in "orderinfo"
+// ============================================
+db.orderinfo.drop(); // clear previous data
+
+db.orderinfo.insertMany([
+  { cust_id: 101, cust_name: "abc", status: "A", price: 250 },
+  { cust_id: 102, cust_name: "xyz", status: "B", price: 800 },
+  { cust_id: 103, cust_name: "pqr", status: "A", price: 600 },
+  { cust_id: 104, cust_name: "lmn", status: "C", price: 1200 },
+  { cust_id: 105, cust_name: "def", status: "A", price: 400 },
+  { cust_id: 106, cust_name: "uvw", status: "B", price: 950 }
+]);
+
+// ============================================
+// i. Find the average price for each customer having status 'A'
+// ============================================
+print("\n--- Average Price for Each Customer Having Status 'A' ---");
+db.orderinfo.aggregate([
+  { $match: { status: "A" } },
+  {
+    $group: {
+      _id: "$cust_name",
+      avg_price: { $avg: "$price" }
+    }
+  }
+]).pretty();
+
+// ============================================
+// ii. Display the status of the customers whose price lies between 100 and 1000
+// ============================================
+print("\n--- Status of Customers Whose Price is Between 100 and 1000 ---");
+db.orderinfo.find(
+  { price: { $gte: 100, $lte: 1000 } },
+  { cust_name: 1, status: 1, price: 1, _id: 0 }
+).pretty();
+
+// ============================================
+// iii. Display the customer information without “_id”
+// ============================================
+print("\n--- All Customer Information Without '_id' Field ---");
+db.orderinfo.find({}, { _id: 0 }).pretty();
+
+// ============================================
+// iv. Create a simple index on 'price' and test queries before & after
+// ============================================
+
+// Check indexes before creating
+print("\n--- Indexes Before ---");
+printjson(db.orderinfo.getIndexes());
+
+// Create index on 'price' field
+db.orderinfo.createIndex({ price: 1 }); // ascending order index
+
+// Check indexes after creating
+print("\n--- Indexes After ---");
+printjson(db.orderinfo.getIndexes());
+
+// Fire a query using price range to see index usage
+print("\n--- Query Using Indexed Field (Price) ---");
+db.orderinfo.find(
+  { price: { $gte: 100, $lte: 1000 } },
+  { cust_name: 1, price: 1, _id: 0 }
+).explain("executionStats");
