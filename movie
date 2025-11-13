@@ -1,0 +1,72 @@
+// ============================================
+// Create & Insert Sample Documents in "movies"
+// ============================================
+db.movies.drop(); // Clear old data
+
+db.movies.insertMany([
+  {
+    name: "Movie1",
+    type: "action",
+    budget: 1000000,
+    producer: {
+      name: "producer1",
+      address: "PUNE"
+    }
+  },
+  {
+    name: "Movie2",
+    type: "drama",
+    budget: 800000,
+    producer: {
+      name: "producer2",
+      address: "MUMBAI"
+    }
+  },
+  {
+    name: "Movie3",
+    type: "action",
+    budget: 2000000,
+    producer: {
+      name: "producer1",
+      address: "PUNE"
+    }
+  }
+]);
+
+// ============================================
+// i. Find the name of the movie having budget greater than 1,00,000
+// ============================================
+print("\n--- Movies with Budget Greater than 1,00,000 ---");
+db.movies.find(
+  { budget: { $gt: 100000 } },
+  { name: 1, budget: 1, _id: 0 }
+).pretty();
+
+// ============================================
+// ii. Find the name of producer who lives in Pune
+// ============================================
+print("\n--- Producers Who Live in Pune ---");
+db.movies.find(
+  { "producer.address": "PUNE" },
+  { "producer.name": 1, _id: 0 }
+).pretty();
+
+// ============================================
+// iii. Update the type of movie “action” to “horror”
+// ============================================
+db.movies.updateMany(
+  { type: "action" },
+  { $set: { type: "horror" } }
+);
+
+print("\n--- Updated Movies (Action -> Horror) ---");
+db.movies.find().pretty();
+
+// ============================================
+// iv. Find all the documents produced by “producer1” with their address
+// ============================================
+print("\n--- Movies Produced by producer1 (with Address) ---");
+db.movies.find(
+  { "producer.name": "producer1" },
+  { name: 1, "producer.address": 1, _id: 0 }
+).pretty();
