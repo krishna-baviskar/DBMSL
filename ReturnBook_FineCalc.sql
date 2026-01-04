@@ -4,7 +4,7 @@ ACCEPT v_book CHAR PROMPT 'Enter Book Name: '
 SET SERVEROUTPUT ON;
 
 DECLARE
-    v_rollno      NUMBER := &v_roll;
+    v_rollno      NUMBER := &v_roll; 
     v_bookname    VARCHAR2(50) := '&v_book';
     v_dateissue   DATE;
     v_days        NUMBER;
